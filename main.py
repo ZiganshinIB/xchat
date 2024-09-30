@@ -15,8 +15,20 @@ async def main():
 
 if __name__ == '__main__':
     load_dotenv()
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--host', type=str, default='minechat.dvmn.org')
-    parser.add_argument('--port', type=int, default=5000)
+    description = ('Программа слушает Хост и порт. \n'
+                   'Необходимо указать параметр \n'
+                   '\t-H (--host) имя хоста или IP-адрес \n'
+                   '\t-p (--port) номер порта')
+    parser = argparse.ArgumentParser(
+        prog='XChat',
+        description=description,
+        epilog='Пример: python3 main.py -H minechat.dvmn.org -p 5000'
+    )
+    parser.add_argument('-H','--host',
+                        type=str, default='minechat.dvmn.org',
+                        help='адрес хоста или IP-адрес',)
+    parser.add_argument('-p', '--port',
+                        type=int, default=5000,
+                        help='Номер порта')
     args = parser.parse_args()
     asyncio.run(listen_server(args.host, args.port))
