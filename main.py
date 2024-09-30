@@ -39,7 +39,7 @@ if __name__ == '__main__':
                    'Необходимо указать параметр \n'
                    '\t-H (--host) имя хоста или IP-адрес \n'
                    '\t-p (--port) номер порта \n',
-                   '\t-f (--file) имя файла для логирования')
+                   '\t--history путь к файлу для записи истории переписок \n')
     parser = argparse.ArgumentParser(
         prog='XChat',
         description=description,
@@ -51,8 +51,8 @@ if __name__ == '__main__':
     parser.add_argument('-p', '--port',
                         type=int, default=5000,
                         help='Номер порта')
-    parser.add_argument('-f', '--file',
+    parser.add_argument('--history',
                         type=str, default="log.txt",
-                        help='Файл для логирования')
+                        help='Путь к файлу для записи истории переписок')
     args = parser.parse_args()
     asyncio.run(listen_server(args.host, args.port))
