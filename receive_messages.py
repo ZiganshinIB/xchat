@@ -1,51 +1,15 @@
 #!/usr/bin/python3
-import datetime
 from dotenv import load_dotenv
 import logging
 import configargparse
 
 import asyncio
-import aiofiles
 from socket import socket
 
-
-async def write_to_file(file_name, text):
-    '''
-        Записывает текст в файл
-        :param file_name: Путь к файлу
-        :param text: Текст
-        :return:
-    '''
-    async with aiofiles.open(file_name, 'a') as file:
-        await file.write(text)
+from history import History
 
 
-async def listen_server(host, port, file_name='log.txt'):
-    '''
-    Программа слушает Хост и порт.
-    :param host: Хост или IP-адрес Хоста
-    :param port: Порт Хоста
-    :param file_name: Путь к файлу для записи истории переписок
-    :return:
-    '''
-    while True:
-        try:
-            reader, _ = await asyncio.open_connection(host, port)
-            line = await reader.readline()
-            if line:
-                timestamp = datetime.datetime.now().strftime("[%Y-%m-%d %H:%M]")
-                log = f'{timestamp} {line.decode()}'
-                await write_to_file(file_name, log)
-        except socket.gaierror as exe:
-            print(f'Адрес {host} недоступен. Ошибка: {exe}')
-            await asyncio.sleep(5)
-
-
-# async def main():
-#     pass
-
-if __name__ == '__main__':
-    load_dotenv()
+def init_config():
     description = ('Программа слушает Хост и порт. \n'
                    'Необходимо указать параметр \n'
                    '\t-H (--host) имя хоста или IP-адрес \n'
@@ -61,9 +25,39 @@ if __name__ == '__main__':
                env_var='HOST')
     parser.add('-p', '--port', required=True,
                help='Номер порта',
-               env_var='SEND_PORT')
+               env_var='RECEIVE_PORT')
     parser.add('--history', required=True,
                help='Путь к файлу для записи истории переписок',
                env_var='HISTORY')
-    args = parser.parse_args()
-    asyncio.run(listen_server(args.host, args.port))
+    args, _ = parser.parse_known_args()
+    return args
+
+
+async def listen_server(host, port):
+    '''
+    Программа слушает Хост и порт.
+    :param host: Хост или IP-адрес Хоста
+    :param port: Порт Хоста
+    :param file_name: Путь к файлу для записи истории переписок
+    :return:
+    '''
+    reader, _ = await asyncio.open_connection(host, port)
+    received_msg = await reader.readline()
+    decode_msg = received_msg.decode()
+    return decode_msg
+
+
+async def main():
+    config = init_config()
+    history = History(config.history, print_history=True)
+    while True:
+        try:
+            msg = await listen_server(config.host, config.port)
+            await history.append(msg)
+        except socket.gaierror:
+            await asyncio.sleep(2)
+
+
+if __name__ == '__main__':
+    load_dotenv()
+    asyncio.run(main())
